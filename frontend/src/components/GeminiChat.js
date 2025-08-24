@@ -10,11 +10,9 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import PersonIcon from "@mui/icons-material/Person";
 import ChatIcon from "@mui/icons-material/Chat";
-import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function GeminiChat() {
-  // ---- Palette ----
   const COLORS = {
     teal: "#0a9396",
     tealDark: "#086f70",
@@ -22,7 +20,7 @@ export default function GeminiChat() {
     botBubble: "#ffffff",
     bg: "#ffffff",
     surface: "#f8fafc",
-    botGradient: "linear-gradient(135deg, #ffd43b, #ffa94d)", // Gemini avatar gradient
+    botGradient: "linear-gradient(135deg, #ffd43b, #ffa94d)",
   };
 
   const [input, setInput] = useState("");
@@ -32,7 +30,9 @@ export default function GeminiChat() {
   const chatEndRef = useRef(null);
 
   const API_BASE =
-    process.env.NODE_ENV === "production" ? "" : "http://localhost:5000";
+    process.env.NODE_ENV === "production"
+      ? "https://csp-1.onrender.com"
+      : "http://localhost:5000";
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,20 +52,11 @@ export default function GeminiChat() {
         body: JSON.stringify({ message: text }),
       });
       const data = await res.json();
+      const formatted = data?.reply
+        ? data.reply.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>")
+        : "No response from server";
 
-      if (data?.reply) {
-        // Format basic markdown-like text into HTML manually
-        const formatted = data.reply
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/\n/g, "<br/>");
-
-        setMessages((m) => [...m, { text: formatted, sender: "bot" }]);
-      } else {
-        setMessages((m) => [
-          ...m,
-          { text: "No response from server", sender: "bot" },
-        ]);
-      }
+      setMessages((m) => [...m, { text: formatted, sender: "bot" }]);
     } catch (e) {
       setMessages((m) => [
         ...m,
@@ -91,8 +82,8 @@ export default function GeminiChat() {
         onClick={() => setCollapsed(false)}
         sx={{
           position: "fixed",
-          right: 24,
-          bottom: 24,
+          right: { xs: 16, sm: 24 },
+          bottom: { xs: 16, sm: 24 },
           bgcolor: COLORS.teal,
           color: "#fff",
           width: 64,
@@ -112,12 +103,14 @@ export default function GeminiChat() {
     <Box
       sx={{
         position: "fixed",
-        right: 20,
-        bottom: 20,
+        right: { xs: 12, sm: 20 },
+        bottom: { xs: 12, sm: 20 },
         zIndex: 2147483647,
         bgcolor: COLORS.bg,
-        width: 380,
-        height: 520,
+        width: { xs: "90%", sm: 380 },
+        maxWidth: 380,
+        height: { xs: 420, sm: 520 },
+        maxHeight: 520,
         boxShadow: "0 12px 32px rgba(0,0,0,0.22)",
         borderRadius: 4,
         display: "flex",
@@ -184,8 +177,7 @@ export default function GeminiChat() {
           >
             <Avatar
               sx={{
-                background:
-                  msg.sender === "user" ? COLORS.tealDark : COLORS.botGradient,
+                background: msg.sender === "user" ? COLORS.tealDark : COLORS.botGradient,
                 width: 34,
                 height: 34,
                 color: msg.sender === "user" ? "#fff" : "#000",
@@ -198,8 +190,7 @@ export default function GeminiChat() {
 
             <Box
               sx={{
-                bgcolor:
-                  msg.sender === "user" ? COLORS.userBubble : COLORS.botBubble,
+                bgcolor: msg.sender === "user" ? COLORS.userBubble : COLORS.botBubble,
                 borderRadius: 3,
                 px: 2,
                 py: 1.2,
@@ -262,6 +253,7 @@ export default function GeminiChat() {
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
           sx={{
+            flex: 1,
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
               "& fieldset": { borderColor: `${COLORS.teal}55` },
@@ -273,11 +265,7 @@ export default function GeminiChat() {
         <IconButton
           onClick={sendMessage}
           disabled={!input.trim() || loading}
-          sx={{
-            bgcolor: COLORS.teal,
-            color: "#fff",
-            "&:hover": { bgcolor: COLORS.tealDark },
-          }}
+          sx={{ bgcolor: COLORS.teal, color: "#fff", "&:hover": { bgcolor: COLORS.tealDark } }}
         >
           <SendIcon />
         </IconButton>

@@ -19,7 +19,7 @@ const fadeInUp = keyframes`
 
 // ===== Background =====
 const HeroSectionBG = styled(Box)(({ theme }) => ({
-  width: "100vw",
+  width: "100%",
   minHeight: "100vh",
   background: "linear-gradient(135deg, #005f73 0%, #0a9396 70%, #94d2bd 100%)",
   color: "#fff",
@@ -42,6 +42,7 @@ const ContentWrapper = styled(Box)(({ theme }) => ({
   maxWidth: 1100,
   margin: "0 auto",
   animation: `${fadeInUp} 1.2s ease-out`,
+  zIndex: 5, // ensure buttons stay clickable
 }));
 
 const Title = styled(Typography)(({ theme }) => ({
@@ -49,24 +50,16 @@ const Title = styled(Typography)(({ theme }) => ({
   lineHeight: 1.25,
   marginBottom: "1.2rem",
   textShadow: "0 3px 10px rgba(0,0,0,0.25)",
-  [theme.breakpoints.down("md")]: {
-    fontSize: "2.5rem",
-  },
-  [theme.breakpoints.up("md")]: {
-    fontSize: "3.4rem",
-  },
+  [theme.breakpoints.down("md")]: { fontSize: "2.5rem" },
+  [theme.breakpoints.up("md")]: { fontSize: "3.4rem" },
 }));
 
 const Subtitle = styled(Typography)(({ theme }) => ({
   fontWeight: 500,
   marginBottom: "1.6rem",
   color: "#e0fbfc",
-  [theme.breakpoints.down("md")]: {
-    fontSize: "1.2rem",
-  },
-  [theme.breakpoints.up("md")]: {
-    fontSize: "1.5rem",
-  },
+  [theme.breakpoints.down("md")]: { fontSize: "1.2rem" },
+  [theme.breakpoints.up("md")]: { fontSize: "1.5rem" },
 }));
 
 const Description = styled(Typography)(({ theme }) => ({
@@ -75,12 +68,8 @@ const Description = styled(Typography)(({ theme }) => ({
   maxWidth: 800,
   marginBottom: "2.5rem",
   color: "#d8f3dc",
-  [theme.breakpoints.down("md")]: {
-    fontSize: "1rem",
-  },
-  [theme.breakpoints.up("md")]: {
-    fontSize: "1.2rem",
-  },
+  [theme.breakpoints.down("md")]: { fontSize: "1rem" },
+  [theme.breakpoints.up("md")]: { fontSize: "1.2rem" },
 }));
 
 const PrimaryButton = styled(Button)(({ theme }) => ({
@@ -92,14 +81,8 @@ const PrimaryButton = styled(Button)(({ theme }) => ({
   borderRadius: 30,
   fontSize: "1.1rem",
   boxShadow: "0 6px 16px rgba(238, 155, 0, 0.4)",
-  "&:hover": {
-    backgroundColor: "#ca8a04",
-    transform: "translateY(-2px)",
-  },
-  [theme.breakpoints.down("md")]: {
-    padding: theme.spacing(1.3, 3.5),
-    fontSize: "1rem",
-  },
+  "&:hover": { backgroundColor: "#ca8a04", transform: "translateY(-2px)" },
+  [theme.breakpoints.down("md")]: { padding: theme.spacing(1.3, 3.5), fontSize: "1rem" },
 }));
 
 const SecondaryButton = styled(Button)(({ theme }) => ({
@@ -110,14 +93,8 @@ const SecondaryButton = styled(Button)(({ theme }) => ({
   padding: theme.spacing(1.5, 4.5),
   borderRadius: 30,
   fontSize: "1.1rem",
-  "&:hover": {
-    backgroundColor: "rgba(238,155,0,0.1)",
-    transform: "translateY(-2px)",
-  },
-  [theme.breakpoints.down("md")]: {
-    padding: theme.spacing(1.3, 3.5),
-    fontSize: "1rem",
-  },
+  "&:hover": { backgroundColor: "rgba(238,155,0,0.1)", transform: "translateY(-2px)" },
+  [theme.breakpoints.down("md")]: { padding: theme.spacing(1.3, 3.5), fontSize: "1rem" },
 }));
 
 const ButtonsContainer = styled(Box)(({ theme }) => ({
@@ -133,6 +110,7 @@ const WaveShape = styled("svg")({
   left: 0,
   width: "100%",
   height: 160,
+  pointerEvents: "none", // <-- prevents overlay from blocking clicks
 });
 
 export default function CommunityHero() {

@@ -2,11 +2,11 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import MaterialsSection from "./components/MaterialsSection"; // adjust path if needed
-import NavBar from "./components/NavBar"; // Reusable NavBar
-import SessionTopics from "./components/SessionTopics"; // Topics component with images
+import NavBar from "./components/NavBar";
+import SessionTopics from "./components/SessionTopics";
+import MaterialsSection from "./components/MaterialsSection";
 
-// ==== Top Hero section with gradient background ====
+// ==== Hero Section ====
 const HeroSectionBG = styled(Box)(({ theme }) => ({
   width: "100%",
   minHeight: 280,
@@ -17,47 +17,48 @@ const HeroSectionBG = styled(Box)(({ theme }) => ({
   alignItems: "center",
   justifyContent: "center",
   fontFamily: "'Poppins', sans-serif",
-  position: "relative",
-  padding: theme.spacing(6, 2),
+  padding: theme.spacing({ xs: 4, sm: 6 }),
+  textAlign: "center",
+  boxSizing: "border-box",
 }));
 
-// ==== Content area below hero ====
-const ContentSection = styled(Box)(({ theme }) => ({
-  backgroundColor: "#fff",
-  color: "#222",
-  padding: theme.spacing(4, 2),
-  maxWidth: 1200, // widened card
-  margin: "0 auto",
-  borderRadius: 12,
-  boxShadow: "0 4px 16px rgb(0 0 0 / 0.1)",
-  marginTop: theme.spacing(-8), // overlap effect
-  fontFamily: "'Poppins', sans-serif",
-  zIndex: 10,
-  position: "relative",
-}));
-
-// ==== Title & Subtitle in hero ====
 const Title = styled(Typography)({
   fontWeight: 800,
-  fontSize: "2.8rem",
+  fontSize: "2.5rem",
   marginBottom: 8,
-  textAlign: "center",
   textShadow: "0 3px 8px rgba(0,0,0,0.3)",
 });
 
 const Subtitle = styled(Typography)({
   fontWeight: 500,
-  fontSize: "1.45rem", // ⬅️ slightly bigger
+  fontSize: "1.2rem",
   marginBottom: 24,
-  color: "#f9f7e8ff", // ⬅️ white for contrast
-  textAlign: "center",
-  textShadow: "0 2px 6px rgba(0,0,0,0.4)", // ⬅️ subtle shadow for visibility
+  color: "#f9f7e8ff",
+  textShadow: "0 2px 6px rgba(0,0,0,0.4)",
 });
+
+// ==== Content Section ====
+const ContentSection = styled(Box)(({ theme }) => ({
+  backgroundColor: "#fff",
+  color: "#222",
+  padding: theme.spacing({ xs: 3, sm: 4 }),
+  maxWidth: 1200,
+  margin: "0 auto",
+  borderRadius: 12,
+  boxShadow: "0 4px 16px rgb(0 0 0 / 0.1)",
+  marginTop: theme.spacing(-8),
+  fontFamily: "'Poppins', sans-serif",
+  zIndex: 10,
+  position: "relative",
+  overflowX: "hidden", // prevent horizontal scroll
+  width: "100%",
+  boxSizing: "border-box",
+}));
 
 export default function ServicePages({ materials = [], materialsRef }) {
   return (
     <>
-      {/* ==== Hero Section ==== */}
+      {/* Hero Section */}
       <HeroSectionBG>
         <NavBar />
         <Title>Our Services</Title>
@@ -66,14 +67,14 @@ export default function ServicePages({ materials = [], materialsRef }) {
         </Subtitle>
       </HeroSectionBG>
 
-      {/* ==== Main Content Section ==== */}
+      {/* Main Content */}
       <ContentSection>
-        {/* Session Topics Section */}
-        <section style={{ marginBottom: 40 }}>
+        {/* Session Topics */}
+        <section style={{ marginBottom: 40, overflowX: "hidden" }}>
           <SessionTopics />
         </section>
 
-        {/* Materials Provided - assign ref here */}
+        {/* Materials Provided */}
         <section style={{ marginBottom: 40 }} ref={materialsRef}>
           <Typography
             variant="h5"

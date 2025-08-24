@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import CommunityHero from "./components/HeroSection";
 import StatsCardsSection from "./components/StatsCardsSection";
-import FeaturesSection from "./components/FeaturesSection"; // ← final
+import FeaturesSection from "./components/FeaturesSection";
 import PlacesVisited from "./components/places";
 import GeminiChat from "./components/GeminiChat";
 import AboutUs from "./components/AboutUs";
@@ -39,10 +39,10 @@ export default function CommunityServiceProject() {
   const [selectedWeek, setSelectedWeek] = useState(null);
 
   return (
-    <div style={{ background: "#fff" }}>
+    <div style={{ background: "#fff", overflowX: "hidden" }}>
       <CommunityHero onLogin={() => {}} />
       <StatsCardsSection />
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 16px" }}>
         <AboutUs />
         <FeaturesSection
           weeks={weeks}
@@ -50,8 +50,8 @@ export default function CommunityServiceProject() {
           setSelectedWeek={setSelectedWeek}
         />
         <PlacesVisited />
-        <GeminiChat />
       </div>
+      <GeminiChat />
     </div>
   );
 }
