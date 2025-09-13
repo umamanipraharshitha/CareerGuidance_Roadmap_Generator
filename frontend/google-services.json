@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "681766331900",
+    "project_id": "csp-2025-44e86",
+    "storage_bucket": "csp-2025-44e86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:681766331900:android:dd4c8562aa226f555c3e79",
+        "android_client_info": {
+          "package_name": "csp2025_1.a.a"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnD5l1Gcl00Slj2Br4NnZSSbtJV8AIZJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

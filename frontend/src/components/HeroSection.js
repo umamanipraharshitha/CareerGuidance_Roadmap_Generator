@@ -1,7 +1,7 @@
 // src/components/CommunityHero.js
 import React from "react";
-import { Box, Typography, Button, keyframes, useMediaQuery } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
+import { Box, Typography, Button, keyframes } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./NavBar";
 
@@ -115,8 +115,8 @@ const WaveShape = styled("svg")({
 
 export default function CommunityHero() {
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  
+
 
   return (
     <HeroSectionBG>
@@ -136,13 +136,16 @@ export default function CommunityHero() {
         </Description>
 
         <ButtonsContainer>
-          <PrimaryButton onClick={() => navigate("/services")}>
-            Our Services
-          </PrimaryButton>
-          <SecondaryButton onClick={() => navigate("/contact")}>
-            Contact Us
-          </SecondaryButton>
-        </ButtonsContainer>
+
+  <PrimaryButton onClick={() => navigate("/login")}>
+    Try RoadmapGenerator
+  </PrimaryButton>
+
+  <SecondaryButton onClick={() => navigate("/contact")}>
+    Contact Us
+  </SecondaryButton>
+</ButtonsContainer>
+
       </ContentWrapper>
 
       <WaveShape viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">

@@ -4,7 +4,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CommunityServiceProject from "./CommunityServiceProject";
 import ServicePages from "./ServicePages";
 import ContactMe from "./contactme";
-
+import Login from "./components/Login";
+import CareerPath from "./careerpath";
+import AdminDashboardPro from "./components/AdminDashboardPro";
 export default function App() {
   const [showIntro, setShowIntro] = useState(true);
 
@@ -197,6 +199,10 @@ export default function App() {
             <Route path="/about" element={<CommunityServiceProject/>} />
             <Route path="/services" element={<ServicePages/>} />
             <Route path="/contact" element={<ContactMe/>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/career-path" element={<CareerPath />} />
+            <Route path="/admin-dashboard" element={<AdminDashboardPro />} />
+           
           </Routes>
         </Router>
       )}
