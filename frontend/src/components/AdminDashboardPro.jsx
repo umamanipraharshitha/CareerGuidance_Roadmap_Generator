@@ -14,10 +14,6 @@ import {
   Paper,
   TextField,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   CircularProgress,
   Table,
   TableBody,
@@ -72,7 +68,6 @@ export default function AdminDashboardPro() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("user");
-  const [openNotifyDialog, setOpenNotifyDialog] = useState(false);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -102,27 +97,40 @@ export default function AdminDashboardPro() {
     }
   };
 
-  // ===== FETCH STATS =====
+  // ===== FETCH STATS (FIXED) =====
   const fetchStats = async () => {
-    setLoadingStats(true);
-    try {
-      const res = await fetch(`${API_URL}/api/admin/stats`);
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      const data = await res.json();
-      const monthly = Array.from({ length: 12 }, (_, i) => {
-        const month = (i + 1).toString().padStart(2, "0");
-        const count =
-          data.chartData?.filter((d) => d.date.split("-")[1] === month).reduce((a, c) => a + c.count, 0) || 0;
-        return { month, count };
-      });
-      setStats({ registrations: monthly, totalUsers: data.totalUsers || 0 });
-    } catch (err) {
-      console.error(err);
-      setStats({ registrations: [], totalUsers: 0 });
-    } finally {
-      setLoadingStats(false);
-    }
-  };
+  setLoadingStats(true);
+  try {
+    const res = await fetch(`${API_URL}/api/admin/stats`);
+    if (!res.ok) throw new Error("Failed to fetch stats");
+    const data = await res.json();
+    console.log("Stats API response:", data); // 👈 you'll see { totalUsers, registrations }
+
+    const monthly = Array.from({ length: 12 }, (_, i) => {
+      const monthIndex = i; // 0 = Jan
+      const count =
+        data.registrations
+          ?.filter((d) => {
+            const date = new Date(d.date);
+            return date.getMonth() === monthIndex;
+          })
+          .reduce((a, c) => a + c.count, 0) || 0;
+
+      return { month: monthIndex + 1, count };
+    });
+
+    setStats({
+      registrations: monthly,
+      totalUsers: data.totalUsers || 0,
+    });
+  } catch (err) {
+    console.error(err);
+    setStats({ registrations: [], totalUsers: 0 });
+  } finally {
+    setLoadingStats(false);
+  }
+};
+
 
   // ===== SEARCH FILTER =====
   const filteredUsers = users.filter((u) => {
@@ -153,7 +161,6 @@ export default function AdminDashboardPro() {
       const data = await res.json();
       if (res.ok) {
         alert(data.message || "Notification sent successfully");
-        setOpenNotifyDialog(false);
         setSubject("");
         setMessage("");
       } else alert(data.message || "Failed to send notification");
