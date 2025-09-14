@@ -93,6 +93,17 @@ const ChatBubble = styled(Box)(({ from }) => ({
 }));
 
 // ------------------ Roadmap Flow ------------------
+
+// Helper: Assign stream group based on step text
+function getStreamGroup(step) {
+  const txt = (step.step || "").toLowerCase();
+  if (txt.includes("science")) return "Science";
+  if (txt.includes("commerce")) return "Commerce";
+  if (txt.includes("arts")) return "Arts";
+  if (txt.includes("humanities")) return "Arts";
+  return "General"; // before branching
+}
+
 function CareerFlow({ roadmap }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -100,7 +111,24 @@ function CareerFlow({ roadmap }) {
   useEffect(() => {
     if (!roadmap || roadmap.length === 0) return;
 
-    const generatedNodes = roadmap.map((item, idx) => ({
+    // Identify streams at each step
+    let streamTag = "General";
+    const roadmapWithStreams = roadmap.map((item, idx) => {
+      const group = getStreamGroup(item);
+      if (group !== "General") streamTag = group;
+      return { ...item, stream: streamTag };
+    });
+
+    // Group vertical position (y) by stream
+    const uniqueStreams = [
+      ...new Set(roadmapWithStreams.map((step) => step.stream)),
+    ];
+    const streamYMap = {};
+    uniqueStreams.forEach((s, i) => {
+      streamYMap[s] = 60 + i * 170;
+    });
+
+    const generatedNodes = roadmapWithStreams.map((item, idx) => ({
       id: `node-${idx}`,
       data: {
         label: (
@@ -109,7 +137,7 @@ function CareerFlow({ roadmap }) {
           </div>
         ),
       },
-      position: { x: 250 * idx, y: 50 },
+      position: { x: 250 * idx, y: streamYMap[item.stream] },
       style: {
         border: "2px solid #0a9396",
         borderRadius: 10,
@@ -119,13 +147,21 @@ function CareerFlow({ roadmap }) {
       },
     }));
 
-    const generatedEdges = roadmap.slice(1).map((_, idx) => ({
-      id: `edge-${idx}`,
-      source: `node-${idx}`,
-      target: `node-${idx + 1}`,
-      animated: true,
-      style: { stroke: "#0a9396" },
-    }));
+    // Only connect nodes within the same stream path
+    const generatedEdges = [];
+    for (let i = 1; i < roadmapWithStreams.length; i++) {
+      const prev = roadmapWithStreams[i - 1];
+      const curr = roadmapWithStreams[i];
+      if (prev.stream === curr.stream) {
+        generatedEdges.push({
+          id: `edge-${i - 1}`,
+          source: `node-${i - 1}`,
+          target: `node-${i}`,
+          animated: true,
+          style: { stroke: "#0a9396" },
+        });
+      }
+    }
 
     setNodes(generatedNodes);
     setEdges(generatedEdges);
@@ -253,6 +289,7 @@ export default function UserDashboardPro() {
       ]);
 
       if (Array.isArray(data.roadmapUpdates)) {
+        // Backward compatible: handle either flat array of strings or objects
         const steps = ["10th Class", ...data.roadmapUpdates];
         setRoadmap(
           steps.map((step) =>
@@ -510,7 +547,12 @@ export default function UserDashboardPro() {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     disabled={loading}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 20, bgcolor: "#fff" } }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 20,
+                        bgcolor: "#fff",
+                      },
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -554,7 +596,11 @@ export default function UserDashboardPro() {
               >
                 Download PDF
               </Button>
-              <Button variant="outlined" startIcon={<Email />} onClick={handleSendEmail}>
+              <Button
+                variant="outlined"
+                startIcon={<Email />}
+                onClick={handleSendEmail}
+              >
                 Send to Email
               </Button>
             </Box>
@@ -563,7 +609,10 @@ export default function UserDashboardPro() {
       </Box>
 
       {/* Change Password Dialog */}
-      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+      <Dialog
+        open={openPasswordDialog}
+        onClose={() => setOpenPasswordDialog(false)}
+      >
         <DialogTitle>Change Password</DialogTitle>
         <DialogContent>
           <TextField
