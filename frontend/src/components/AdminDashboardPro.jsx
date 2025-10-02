@@ -48,10 +48,19 @@ import {
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Title, ChartTooltip, Legend, Filler);
+ChartJS.register(
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Title,
+  ChartTooltip,
+  Legend,
+  Filler
+);
 
 const drawerWidth = 80;
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = "https://csp-2-3.onrender.com";
 
 const GlassCard = styled(Paper)(() => ({
   borderRadius: 16,
@@ -81,7 +90,6 @@ export default function AdminDashboardPro() {
     else if (activePage === "Statistics") fetchStats();
   }, [activePage]);
 
-  // ===== FETCH USERS =====
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
@@ -97,42 +105,34 @@ export default function AdminDashboardPro() {
     }
   };
 
-  // ===== FETCH STATS (FIXED) =====
   const fetchStats = async () => {
-  setLoadingStats(true);
-  try {
-    const res = await fetch(`${API_URL}/api/admin/stats`);
-    if (!res.ok) throw new Error("Failed to fetch stats");
-    const data = await res.json();
-    console.log("Stats API response:", data); // 👈 you'll see { totalUsers, registrations }
+    setLoadingStats(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/stats`);
+      if (!res.ok) throw new Error("Failed to fetch stats");
+      const data = await res.json();
 
-    const monthly = Array.from({ length: 12 }, (_, i) => {
-      const monthIndex = i; // 0 = Jan
-      const count =
-        data.registrations
-          ?.filter((d) => {
-            const date = new Date(d.date);
-            return date.getMonth() === monthIndex;
-          })
-          .reduce((a, c) => a + c.count, 0) || 0;
+      const monthly = Array.from({ length: 12 }, (_, i) => {
+        const monthIndex = i;
+        const count =
+          data.registrations
+            ?.filter((d) => new Date(d.date).getMonth() === monthIndex)
+            .reduce((a, c) => a + c.count, 0) || 0;
+        return { month: monthIndex + 1, count };
+      });
 
-      return { month: monthIndex + 1, count };
-    });
+      setStats({
+        registrations: monthly,
+        totalUsers: data.totalUsers || 0,
+      });
+    } catch (err) {
+      console.error(err);
+      setStats({ registrations: [], totalUsers: 0 });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
-    setStats({
-      registrations: monthly,
-      totalUsers: data.totalUsers || 0,
-    });
-  } catch (err) {
-    console.error(err);
-    setStats({ registrations: [], totalUsers: 0 });
-  } finally {
-    setLoadingStats(false);
-  }
-};
-
-
-  // ===== SEARCH FILTER =====
   const filteredUsers = users.filter((u) => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
@@ -148,9 +148,9 @@ export default function AdminDashboardPro() {
     }
   });
 
-  // ===== SEND NOTIFICATION =====
   const handleSendNotification = async () => {
-    if (!subject.trim() || !message.trim()) return alert("Please fill subject and message");
+    if (!subject.trim() || !message.trim())
+      return alert("Please fill subject and message");
     setSending(true);
     try {
       const res = await fetch(`${API_URL}/api/admin/send-notification`, {
@@ -172,11 +172,17 @@ export default function AdminDashboardPro() {
     }
   };
 
-  // ===== RESET DATABASE =====
   const handleResetDatabase = async () => {
-    if (!window.confirm("⚠️ Are you sure? This will permanently delete ALL data!")) return;
+    if (
+      !window.confirm(
+        "⚠️ Are you sure? This will permanently delete ALL data!"
+      )
+    )
+      return;
     try {
-      const res = await fetch(`${API_URL}/api/admin/reset-database`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/admin/reset-database`, {
+        method: "DELETE",
+      });
       const data = await res.json();
       if (res.ok) {
         alert(data.message || "Database reset successfully");
@@ -193,7 +199,7 @@ export default function AdminDashboardPro() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      window.location.href = "/login";
+      window.location.href = "https://csp-2-207.onrender.com/";
     } catch (err) {
       console.error("Logout failed", err);
     }
@@ -206,7 +212,13 @@ export default function AdminDashboardPro() {
         Users
       </Typography>
       <GlassCard>
-        <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2} mb={2} flexWrap="wrap">
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          spacing={2}
+          mb={2}
+          flexWrap="wrap"
+        >
           <Stack direction="row" spacing={2} flexWrap="wrap">
             <TextField
               select
@@ -244,13 +256,16 @@ export default function AdminDashboardPro() {
             >
               Send Notification
             </Button>
-            <Button variant="outlined" sx={{ mt: { xs: 1, md: 0 } }} onClick={fetchUsers}>
+            <Button
+              variant="outlined"
+              sx={{ mt: { xs: 1, md: 0 } }}
+              onClick={fetchUsers}
+            >
               Refresh
             </Button>
           </Box>
         </Stack>
 
-        {/* Responsive Users Table */}
         <Box sx={{ overflowX: "auto" }}>
           <TableContainer>
             <Table>
@@ -281,7 +296,9 @@ export default function AdminDashboardPro() {
                       <TableCell>{u.displayName || "—"}</TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>{u.uid}</TableCell>
-                      <TableCell>{new Date(u.creationTime).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {new Date(u.creationTime).toLocaleDateString()}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -296,7 +313,20 @@ export default function AdminDashboardPro() {
   // ===== STATISTICS PAGE =====
   const StatisticsPage = () => {
     const chartData = {
-      labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+      labels: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
       datasets: [
         {
           label: "Registrations",
@@ -313,21 +343,40 @@ export default function AdminDashboardPro() {
     const chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: "index", intersect: false },
+      },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
     };
     return (
       <Box>
-        <Typography variant="h5" fontWeight={700} mb={2}>Statistics</Typography>
+        <Typography variant="h5" fontWeight={700} mb={2}>
+          Statistics
+        </Typography>
         <GlassCard>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center" mb={2}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            alignItems="center"
+            mb={2}
+          >
             <Box sx={{ minWidth: 200 }}>
               <Typography variant="h6">Total Users</Typography>
-              <Typography variant="h4" fontWeight={800}>{stats.totalUsers}</Typography>
+              <Typography variant="h4" fontWeight={800}>
+                {stats.totalUsers}
+              </Typography>
             </Box>
             <Box sx={{ flex: 1, height: 300 }}>
               {loadingStats ? (
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100%",
+                  }}
+                >
                   <CircularProgress />
                 </Box>
               ) : (
@@ -336,7 +385,9 @@ export default function AdminDashboardPro() {
             </Box>
           </Stack>
           <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-            <Button variant="contained" color="error" onClick={handleResetDatabase}>Reset Database</Button>
+            <Button variant="contained" color="error" onClick={handleResetDatabase}>
+              Reset Database
+            </Button>
           </Box>
         </GlassCard>
       </Box>
@@ -346,13 +397,31 @@ export default function AdminDashboardPro() {
   // ===== NOTIFICATIONS PAGE =====
   const NotificationsPage = () => (
     <Box>
-      <Typography variant="h5" fontWeight={700} mb={2}>Send Notifications</Typography>
+      <Typography variant="h5" fontWeight={700} mb={2}>
+        Send Notifications
+      </Typography>
       <GlassCard>
         <Stack spacing={2}>
-          <TextField label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} fullWidth />
-          <TextField label="Message" value={message} onChange={(e) => setMessage(e.target.value)} fullWidth multiline rows={4} />
+          <TextField
+            label="Subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            fullWidth
+            multiline
+            rows={4}
+          />
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-            <Button variant="contained" onClick={handleSendNotification} disabled={sending}>
+            <Button
+              variant="contained"
+              onClick={handleSendNotification}
+              disabled={sending}
+            >
               {sending ? "Sending..." : "Send to All Users"}
             </Button>
           </Box>
@@ -361,7 +430,6 @@ export default function AdminDashboardPro() {
     </Box>
   );
 
-  // ===== DRAWER ITEMS =====
   const drawerItems = [
     { text: "Users", icon: <PeopleIcon /> },
     { text: "Statistics", icon: <BarChartIcon /> },
@@ -370,13 +438,31 @@ export default function AdminDashboardPro() {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
-      <AppBar position="fixed" elevation={0} sx={{ zIndex: 1201, background: "#fff", color: "#111", borderBottom: "1px solid #e5e7eb" }}>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          zIndex: 1201,
+          background: "#fff",
+          color: "#111",
+          borderBottom: "1px solid #e5e7eb",
+        }}
+      >
         <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { md: "none" } }}>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: "none" } }}
+          >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>Admin Dashboard</Typography>
-          <IconButton onClick={handleLogout}><LogoutIcon /></IconButton>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
+            Admin Dashboard
+          </Typography>
+          <IconButton onClick={handleLogout}>
+            <LogoutIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -386,13 +472,29 @@ export default function AdminDashboardPro() {
         open={mobileOpen}
         onClose={handleDrawerToggle}
         ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: drawerWidth, bgcolor: "#0a9396", color: "#fff" } }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            bgcolor: "#0a9396",
+            color: "#fff",
+          },
+        }}
       >
         <List>
           {drawerItems.map((item) => (
             <Tooltip key={item.text} title={item.text} placement="right">
-              <ListItem button onClick={() => { setActivePage(item.text); setMobileOpen(false); }} sx={{ justifyContent: "center", py: 2 }}>
-                <ListItemIcon sx={{ color: "#fff", minWidth: "unset" }}>{item.icon}</ListItemIcon>
+              <ListItem
+                button
+                onClick={() => {
+                  setActivePage(item.text);
+                  setMobileOpen(false);
+                }}
+                sx={{ justifyContent: "center", py: 2 }}
+              >
+                <ListItemIcon sx={{ color: "#fff", minWidth: "unset" }}>
+                  {item.icon}
+                </ListItemIcon>
               </ListItem>
             </Tooltip>
           ))}
@@ -402,14 +504,39 @@ export default function AdminDashboardPro() {
       {/* Desktop Drawer */}
       <Drawer
         variant="permanent"
-        sx={{ display: { xs: "none", md: "block" }, width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, bgcolor: "#0a9396", color: "#fff", alignItems: "center" } }}
+        sx={{
+          display: { xs: "none", md: "block" },
+          width: drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            bgcolor: "#0a9396",
+            color: "#fff",
+            alignItems: "center",
+          },
+        }}
       >
         <Toolbar />
         <List>
           {drawerItems.map((item) => (
             <Tooltip key={item.text} title={item.text} placement="right">
-              <ListItem button onClick={() => setActivePage(item.text)} sx={{ justifyContent: "center", py: 2, bgcolor: activePage === item.text ? "rgba(255,255,255,0.2)" : "transparent", borderRadius: 2, mx: 1 }}>
-                <ListItemIcon sx={{ color: "#fff", minWidth: "unset" }}>{item.icon}</ListItemIcon>
+              <ListItem
+                button
+                onClick={() => setActivePage(item.text)}
+                sx={{
+                  justifyContent: "center",
+                  py: 2,
+                  bgcolor:
+                    activePage === item.text
+                      ? "rgba(255,255,255,0.2)"
+                      : "transparent",
+                  borderRadius: 2,
+                  mx: 1,
+                }}
+              >
+                <ListItemIcon sx={{ color: "#fff", minWidth: "unset" }}>
+                  {item.icon}
+                </ListItemIcon>
               </ListItem>
             </Tooltip>
           ))}

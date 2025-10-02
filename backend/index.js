@@ -23,20 +23,20 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false, // ✅ ignore self-signed certs (dev only!)
+    rejectUnauthorized: false, // For development only
   },
 });
 
 // ====== CONFIG ======
 const PORT = process.env.PORT || 5000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const EMAIL_USER = process.env.EMAIL_USER; // Your sending Gmail email
-const EMAIL_PASS = process.env.EMAIL_PASS; // Gmail app password or OAuth token
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
 
 // ====== GEMINI AI SETUP ======
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-async function callGeminiModel(message, modelName) {
+async function callGeminiModel(message, modelName = "gemini-2.5-flash") {
   const model = genAI.getGenerativeModel({ model: modelName });
 
   let retries = 3;
@@ -55,6 +55,7 @@ async function callGeminiModel(message, modelName) {
     }
   }
 }
+
 // ====== CHAT ENDPOINT ======
 app.post("/api/chat", async (req, res) => {
   try {
@@ -64,7 +65,7 @@ app.post("/api/chat", async (req, res) => {
     }
 
     // Gemini prompt
-   const prompt = `
+    const prompt = `
 You are a career guidance assistant. 
 The student is currently in 10th class and wants a full career roadmap.
 
@@ -93,20 +94,17 @@ The student is currently in 10th class and wants a full career roadmap.
 User question: "${message}"
 `;
 
-
-    // Try Gemini
     let result;
     try {
-      result = await callGeminiModel(prompt, "gemini-1.5-flash");
+      result = await callGeminiModel(prompt, "gemini-2.5-flash");
     } catch (e) {
-      console.warn("⚠️ Falling back to gemini-pro...");
-      result = await callGeminiModel(prompt, "gemini-pro");
+      console.error("Gemini API error:", e);
+      return res.status(503).json({ error: "Gemini servers busy. Please try again shortly." });
     }
 
     const rawText = result?.response?.text?.();
     if (!rawText) return res.status(502).json({ error: "AI returned empty response." });
 
-    // Extract JSON
     let parsed;
     try {
       const jsonStart = rawText.indexOf("{");
@@ -119,7 +117,6 @@ User question: "${message}"
 
     const newSteps = Array.isArray(parsed.roadmapUpdates) ? parsed.roadmapUpdates : [];
 
-    // 🔥 Save / merge into Firestore
     if (userId) {
       const userDocRef = db.collection("users").doc(userId);
       const userDoc = await userDocRef.get();
@@ -129,7 +126,6 @@ User question: "${message}"
         existingRoadmap = userDoc.data().roadmap || [];
       }
 
-      // Merge (avoid duplicates)
       const updatedRoadmap = [...new Set([...existingRoadmap, ...newSteps])];
 
       await userDocRef.set(
@@ -142,7 +138,6 @@ User question: "${message}"
         roadmapUpdates: updatedRoadmap,
       });
     } else {
-      // If no userId provided, just return Gemini’s roadmap
       res.json({
         reply: parsed.reply || rawText,
         roadmapUpdates: newSteps,
@@ -167,27 +162,23 @@ app.post("/api/chat1", async (req, res) => {
     }
 
     // Gemini prompt
-   const prompt = `
+    const prompt = `
 You are a career guidance assistant. 
 The student is currently in highschool and wants a full career roadmap.
-
 User question: "${message}"
 `;
 
-
-    // Try Gemini
     let result;
     try {
-      result = await callGeminiModel(prompt, "gemini-1.5-flash");
+      result = await callGeminiModel(prompt, "gemini-2.5-flash");
     } catch (e) {
-      console.warn("⚠️ Falling back to gemini-pro...");
-      result = await callGeminiModel(prompt, "gemini-pro");
+      console.error("Gemini API error:", e);
+      return res.status(503).json({ error: "Gemini servers busy. Please try again shortly." });
     }
 
     const rawText = result?.response?.text?.();
     if (!rawText) return res.status(502).json({ error: "AI returned empty response." });
 
-    // Extract JSON
     let parsed;
     try {
       const jsonStart = rawText.indexOf("{");
@@ -200,7 +191,6 @@ User question: "${message}"
 
     const newSteps = Array.isArray(parsed.roadmapUpdates) ? parsed.roadmapUpdates : [];
 
-    // 🔥 Save / merge into Firestore
     if (userId) {
       const userDocRef = db.collection("users").doc(userId);
       const userDoc = await userDocRef.get();
@@ -210,7 +200,6 @@ User question: "${message}"
         existingRoadmap = userDoc.data().roadmap || [];
       }
 
-      // Merge (avoid duplicates)
       const updatedRoadmap = [...new Set([...existingRoadmap, ...newSteps])];
 
       await userDocRef.set(
@@ -223,7 +212,6 @@ User question: "${message}"
         roadmapUpdates: updatedRoadmap,
       });
     } else {
-      // If no userId provided, just return Gemini’s roadmap
       res.json({
         reply: parsed.reply || rawText,
         roadmapUpdates: newSteps,
@@ -240,7 +228,6 @@ User question: "${message}"
   }
 });
 
-
 // ====== EMAIL SETUP ======
 
 // ====== SEND EMAIL ENDPOINT (for chat exports and contact forms) ======
@@ -252,10 +239,9 @@ app.post("/send-email", async (req, res) => {
   }
 
   try {
-    // Send email FROM your configured identity TO the user's email with chat transcript
     await transporter.sendMail({
-      from: `"${name}" <${EMAIL_USER}>`, // From your verified sending email
-      to: email, // Send to the user who requested export
+      from: `"${name}" <${EMAIL_USER}>`,
+      to: email,
       subject: `Your Career Chat Transcript`,
       text: message,
     });
@@ -268,35 +254,29 @@ app.post("/send-email", async (req, res) => {
 });
 
 // ====== TOKEN VERIFICATION ======
-// ====== TOKEN VERIFICATION ======
 app.post("/verify-token", async (req, res) => {
   const { idToken } = req.body;
 
   try {
-    // Verify token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Get user record from Firebase Auth
     const userRecord = await admin.auth().getUser(uid);
 
-    // Firestore user doc
     const userDocRef = db.collection("users").doc(uid);
     const userDoc = await userDocRef.get();
 
-    // Store joined date only once
     if (!userDoc.exists) {
       await userDocRef.set(
         {
           email: userRecord.email,
           displayName: userRecord.displayName || "",
-          joinedDate: userRecord.metadata.creationTime, // ✅ joined date
+          joinedDate: userRecord.metadata.creationTime,
           lastLogin: new Date().toISOString(),
         },
         { merge: true }
       );
     } else {
-      // Update last login only
       await userDocRef.set(
         { lastLogin: new Date().toISOString() },
         { merge: true }
@@ -335,6 +315,7 @@ app.post("/create-user", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
 // ====== SEND REPORT (chat + roadmap export) ======
 app.post("/api/send-report", async (req, res) => {
   const { email, chatHistory, roadmap } = req.body;
@@ -344,24 +325,21 @@ app.post("/api/send-report", async (req, res) => {
   }
 
   try {
-    // Format chat
     const chatContent = (chatHistory || [])
       .map((msg) => `${msg.from === "user" ? "You" : "Bot"}: ${msg.text}`)
       .join("\n");
 
-    // Format roadmap
     const roadmapContent = (roadmap || [])
       .map((step, idx) => `${idx + 1}. ${step.step} - ${step.description || ""}`)
       .join("\n");
 
-    // Email body
     const emailBody = `Here is your CareerPath chat & roadmap:\n\n` +
       `🗨️ Chat:\n${chatContent}\n\n` +
       `🛣️ Roadmap:\n${roadmapContent}\n\n` +
       `✨ Keep working towards your goals!`;
 
     await transporter.sendMail({
-      from: `"CareerPath AI" <${process.env.EMAIL_USER}>`,
+      from: `"CareerPath AI" <${EMAIL_USER}>`,
       to: email,
       subject: "Your CareerPath Report",
       text: emailBody,
@@ -373,6 +351,7 @@ app.post("/api/send-report", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to send report" });
   }
 });
+
 // ====== ADMIN ENDPOINTS ======
 
 // 1️⃣ Fetch All Users (for Admin Dashboard)
@@ -395,13 +374,11 @@ app.get("/api/admin/users", async (req, res) => {
 });
 
 // 2️⃣ Get User Stats (Registrations Over Time)
-// 2️⃣ Get User Stats (Registrations Over Time)
 app.get("/api/admin/stats", async (req, res) => {
   try {
     const listUsersResult = await admin.auth().listUsers();
     const users = listUsersResult.users;
 
-    // Group users by date
     const stats = {};
     users.forEach((user) => {
       const date = new Date(user.metadata.creationTime).toISOString().split("T")[0];
@@ -430,11 +407,10 @@ app.post("/api/admin/send-notification", async (req, res) => {
     const listUsersResult = await admin.auth().listUsers();
     const emails = listUsersResult.users.map((u) => u.email).filter(Boolean);
 
-    // Send emails in parallel
     await Promise.all(
       emails.map((email) =>
         transporter.sendMail({
-          from: `"CareerPath Admin" <${process.env.EMAIL_USER}>`,
+          from: `"CareerPath Admin" <${EMAIL_USER}>`,
           to: email,
           subject,
           text: message,
@@ -452,14 +428,12 @@ app.post("/api/admin/send-notification", async (req, res) => {
 // 4️⃣ Reset Database (Delete ALL Users + Firestore Data)
 app.delete("/api/admin/reset-database", async (req, res) => {
   try {
-    // 1. Delete all Firebase Auth users
     const listUsersResult = await admin.auth().listUsers();
     const deletePromises = listUsersResult.users.map((user) =>
       admin.auth().deleteUser(user.uid)
     );
     await Promise.all(deletePromises);
 
-    // 2. Delete all Firestore collections (users, etc.)
     const collections = await db.listCollections();
     for (const collection of collections) {
       const snapshot = await collection.get();

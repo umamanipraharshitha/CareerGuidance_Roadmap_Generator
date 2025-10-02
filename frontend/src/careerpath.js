@@ -37,12 +37,7 @@ import {
 } from "@mui/icons-material";
 import jsPDF from "jspdf";
 import { styled } from "@mui/material/styles";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  updatePassword,
-} from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut, updatePassword } from "firebase/auth";
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -54,18 +49,10 @@ import "reactflow/dist/style.css";
 import { useNavigate } from "react-router-dom";
 
 // ------------------ Config ------------------
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = "http://localhost:5000";
 const drawerWidth = 80;
 
 // ------------------ Styles ------------------
-const GlassCard = styled(Paper)(() => ({
-  borderRadius: 20,
-  background: "rgba(255, 255, 255, 0.7)",
-  backdropFilter: "blur(12px)",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-  padding: 20,
-}));
-
 const ChatWindow = styled(Paper)(() => ({
   borderRadius: 20,
   padding: 20,
@@ -93,15 +80,12 @@ const ChatBubble = styled(Box)(({ from }) => ({
 }));
 
 // ------------------ Roadmap Flow ------------------
-
-// Helper: Assign stream group based on step text
 function getStreamGroup(step) {
   const txt = (step.step || "").toLowerCase();
   if (txt.includes("science")) return "Science";
   if (txt.includes("commerce")) return "Commerce";
-  if (txt.includes("arts")) return "Arts";
-  if (txt.includes("humanities")) return "Arts";
-  return "General"; // before branching
+  if (txt.includes("arts") || txt.includes("humanities")) return "Arts";
+  return "General";
 }
 
 function CareerFlow({ roadmap }) {
@@ -111,18 +95,14 @@ function CareerFlow({ roadmap }) {
   useEffect(() => {
     if (!roadmap || roadmap.length === 0) return;
 
-    // Identify streams at each step
     let streamTag = "General";
-    const roadmapWithStreams = roadmap.map((item, idx) => {
+    const roadmapWithStreams = roadmap.map((item) => {
       const group = getStreamGroup(item);
       if (group !== "General") streamTag = group;
       return { ...item, stream: streamTag };
     });
 
-    // Group vertical position (y) by stream
-    const uniqueStreams = [
-      ...new Set(roadmapWithStreams.map((step) => step.stream)),
-    ];
+    const uniqueStreams = [...new Set(roadmapWithStreams.map((step) => step.stream))];
     const streamYMap = {};
     uniqueStreams.forEach((s, i) => {
       streamYMap[s] = 60 + i * 170;
@@ -147,7 +127,6 @@ function CareerFlow({ roadmap }) {
       },
     }));
 
-    // Only connect nodes within the same stream path
     const generatedEdges = [];
     for (let i = 1; i < roadmapWithStreams.length; i++) {
       const prev = roadmapWithStreams[i - 1];
@@ -193,24 +172,17 @@ export default function UserDashboardPro() {
   const [question, setQuestion] = useState("");
   const [roadmap, setRoadmap] = useState([]);
   const [chatHistory, setChatHistory] = useState([
-    {
-      from: "bot",
-      text: "👋 Hi! What career interests do you have? You can also say 'not decided'.",
-    },
+    { from: "bot", text: "👋 Hi! What career interests do you have? You can also say 'not decided'." },
   ]);
   const [loading, setLoading] = useState(false);
   const [activePage, setActivePage] = useState("Chat");
   const bottomRef = useRef(null);
   const navigate = useNavigate();
 
-  // Password change state
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
   const [newPassword, setNewPassword] = useState("");
-
-  // Mobile drawer open state
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // MUI theme and media query for responsiveness
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -218,11 +190,8 @@ export default function UserDashboardPro() {
   useEffect(() => {
     const auth = getAuth();
     const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserEmail(user.email);
-      } else {
-        navigate("/login");
-      }
+      if (user) setUserEmail(user.email);
+      else navigate("/login");
     });
     return () => unsub();
   }, [navigate]);
@@ -244,10 +213,7 @@ export default function UserDashboardPro() {
   const handleChangePassword = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
-    if (!user) {
-      alert("⚠️ You need to be logged in.");
-      return;
-    }
+    if (!user) return alert("⚠️ You need to be logged in.");
     try {
       await updatePassword(user, newPassword);
       alert("✅ Password updated successfully!");
@@ -289,7 +255,6 @@ export default function UserDashboardPro() {
       ]);
 
       if (Array.isArray(data.roadmapUpdates)) {
-        // Backward compatible: handle either flat array of strings or objects
         const steps = ["10th Class", ...data.roadmapUpdates];
         setRoadmap(
           steps.map((step) =>
@@ -345,14 +310,12 @@ export default function UserDashboardPro() {
   // ------------------ Send Email ------------------
   const handleSendEmail = async () => {
     if (!userEmail) return alert("Please log in to send reports.");
-
     try {
       const res = await fetch(`${API_URL}/api/send-report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail, chatHistory, roadmap }),
       });
-
       const data = await res.json();
       alert(data.message);
     } catch (err) {
@@ -366,7 +329,6 @@ export default function UserDashboardPro() {
     setMobileOpen((prev) => !prev);
   };
 
-  // ------------------ Drawer Content ------------------
   const drawer = (
     <>
       <Toolbar />
@@ -380,7 +342,7 @@ export default function UserDashboardPro() {
               button
               onClick={() => {
                 setActivePage(item.text);
-                if (isMobile) setMobileOpen(false); // Close drawer on mobile after page select
+                if (isMobile) setMobileOpen(false);
               }}
               sx={{
                 justifyContent: "center",
@@ -403,7 +365,6 @@ export default function UserDashboardPro() {
     </>
   );
 
-  // ------------------ UI ------------------
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
       {/* Topbar */}
@@ -459,7 +420,7 @@ export default function UserDashboardPro() {
         </Toolbar>
       </AppBar>
 
-      {/* Permanent drawer for md and up */}
+      {/* Drawers */}
       {!isMobile && (
         <Drawer
           variant="permanent"
@@ -479,8 +440,6 @@ export default function UserDashboardPro() {
           {drawer}
         </Drawer>
       )}
-
-      {/* Temporary drawer for mobile */}
       {isMobile && (
         <Drawer
           variant="temporary"
@@ -511,15 +470,8 @@ export default function UserDashboardPro() {
           mt: 8,
         }}
       >
-        {/* Page 1: Chat */}
         {activePage === "Chat" && (
-          <Box
-            sx={{
-              display: "flex",
-              gap: 3,
-              flexDirection: { xs: "column", md: "row" },
-            }}
-          >
+          <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", md: "row" } }}>
             <Box sx={{ flex: 2, display: "flex", flexDirection: "column" }}>
               <Typography variant="h5" fontWeight={700} mb={2}>
                 Roadmap Generator
@@ -547,12 +499,7 @@ export default function UserDashboardPro() {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     disabled={loading}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 20,
-                        bgcolor: "#fff",
-                      },
-                    }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 20, bgcolor: "#fff" } }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -562,13 +509,7 @@ export default function UserDashboardPro() {
                   />
                   <Button
                     variant="contained"
-                    sx={{
-                      bgcolor: "#0a9396",
-                      fontWeight: 600,
-                      borderRadius: 20,
-                      px: 3,
-                      "&:hover": { bgcolor: "#005f73" },
-                    }}
+                    sx={{ bgcolor: "#0a9396", fontWeight: 600, borderRadius: 20, px: 3, "&:hover": { bgcolor: "#005f73" } }}
                     onClick={handleSubmit}
                     disabled={loading || !question.trim()}
                   >
@@ -580,7 +521,6 @@ export default function UserDashboardPro() {
           </Box>
         )}
 
-        {/* Page 2: Roadmap */}
         {activePage === "Roadmap" && (
           <Box>
             <Typography variant="h5" fontWeight={700} mb={2}>
@@ -588,19 +528,10 @@ export default function UserDashboardPro() {
             </Typography>
             <CareerFlow roadmap={roadmap} />
             <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
-              <Button
-                variant="contained"
-                startIcon={<Download />}
-                sx={{ bgcolor: "#0a9396" }}
-                onClick={handleDownload}
-              >
+              <Button variant="contained" startIcon={<Download />} sx={{ bgcolor: "#0a9396" }} onClick={handleDownload}>
                 Download PDF
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Email />}
-                onClick={handleSendEmail}
-              >
+              <Button variant="outlined" startIcon={<Email />} onClick={handleSendEmail}>
                 Send to Email
               </Button>
             </Box>
@@ -609,10 +540,7 @@ export default function UserDashboardPro() {
       </Box>
 
       {/* Change Password Dialog */}
-      <Dialog
-        open={openPasswordDialog}
-        onClose={() => setOpenPasswordDialog(false)}
-      >
+      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
         <DialogTitle>Change Password</DialogTitle>
         <DialogContent>
           <TextField

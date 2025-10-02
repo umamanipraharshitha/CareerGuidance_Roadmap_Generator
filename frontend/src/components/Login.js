@@ -19,6 +19,12 @@ import {
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebase";
 
+// ------------------ API BASE ------------------
+const API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://csp-2-3.onrender.com"
+    : "http://localhost:5000";
+
 export default function AuthForm() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("user");
@@ -43,6 +49,14 @@ export default function AuthForm() {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
+
+      // Example backend integration after Google login
+      await fetch(`${API_BASE}/api/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: result.user.uid, email: result.user.email }),
+      });
+
       setAlert({ open: true, message: `Welcome ${result.user.displayName}` });
       navigate("/career-path");
     } catch (error) {
@@ -61,6 +75,18 @@ export default function AuthForm() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
+
+      // Example backend call after registration
+      await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: userCredential.user.uid,
+          email,
+          displayName,
+        }),
+      });
+
       setAlert({ open: true, message: `Welcome ${displayName}` });
       navigate("/career-path");
     } catch (error) {
@@ -77,7 +103,15 @@ export default function AuthForm() {
     }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Example backend call after user login
+      await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: userCredential.user.uid, email }),
+      });
+
       setAlert({ open: true, message: "Login Successful" });
       navigate("/career-path");
     } catch (error) {

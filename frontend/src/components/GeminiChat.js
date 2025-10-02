@@ -29,37 +29,38 @@ export default function GeminiChat() {
   const [collapsed, setCollapsed] = useState(false);
   const chatEndRef = useRef(null);
 
-  const API_BASE =
-    process.env.NODE_ENV === "production"
-      ? "https://csp-1.onrender.com"
-      : "http://localhost:5000";
+  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
     const text = input;
-    setMessages((m) => [...m, { text, sender: "user" }]);
+    setMessages((prev) => [...prev, { text, sender: "user" }]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/chat1`, {  // 🔥 changed endpoint
+      const res = await fetch(`${API_BASE}/api/chat1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
       });
+
       const data = await res.json();
       const formatted = data?.reply
         ? data.reply.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>")
         : "No response from server";
 
-      setMessages((m) => [...m, { text: formatted, sender: "bot" }]);
+      setMessages((prev) => [...prev, { text: formatted, sender: "bot" }]);
     } catch (e) {
-      setMessages((m) => [
-        ...m,
+      console.error("Chat API error:", e);
+      setMessages((prev) => [
+        ...prev,
         { text: "⚠️ Error contacting server", sender: "bot" },
       ]);
     } finally {
@@ -67,14 +68,14 @@ export default function GeminiChat() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   };
 
-  // Collapsed → floating button
+  // Collapsed chat → floating button
   if (collapsed) {
     return (
       <IconButton
@@ -251,7 +252,7 @@ export default function GeminiChat() {
           maxRows={3}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           sx={{
             flex: 1,
             "& .MuiOutlinedInput-root": {

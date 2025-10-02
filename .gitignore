@@ -1,2 +1,26 @@
-"node_modules/" 
-"build/" 
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Build folders
+dist/
+build/
+
+# Logs
+*.log
+
+# OS/Editor files
+.DS_Store
+Thumbs.db
+
+# IDE config
+.vscode/
+.idea/
+
+# Backend-specific ignores
+backend/node_modules/
+# Firebase service account key
+backend/serviceAccountKey.json
