@@ -18,8 +18,8 @@ This project aims to guide users toward the right learning path with curated res
 - **Frontend:** React Js 
 - **Backend:** Node.js, Express.js  
 - **Database & Auth:** Firebase
-- ** AI **: Gemini API integration
-- ** Charts** : React-flow , Chart JS
+- **AI**: Gemini API integration
+- **Charts** : React-flow , Chart JS
 - **Version Control:** Git & GitHub
 
 ---
