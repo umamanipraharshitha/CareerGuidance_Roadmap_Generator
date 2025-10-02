@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyApeiEU6nIJBWTDkcdjKQfZvkJYx14c8m4",
-  authDomain: "csp-2025-44e86.firebaseapp.com",
-  projectId: "csp-2025-44e86",
-  storageBucket: "csp-2025-44e86.appspot.com",
-  messagingSenderId: "681766331900",
-  appId: "1:681766331900:web:fae424eedb1e1b8f5c3e79",
+  apiKey: 
+  authDomain:
+  projectId:
+  storageBucket: 
+  messagingSenderId: 
+  appId: 
 };
 
 // Initialize Firebase
