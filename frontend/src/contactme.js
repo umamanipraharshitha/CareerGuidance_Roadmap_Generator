@@ -124,9 +124,9 @@ const facultyNames = [
 ];
 
 // ==== EmailJS IDs ====
-const serviceID = "service_46yfrpi";
-const templateID = "template_0yzjqgb";
-const userID = "_7B-O_2Cr_iI7TA3s";
+const serviceID = ....
+const templateID =....
+const userID =...
 
 export default function ContactUs() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
